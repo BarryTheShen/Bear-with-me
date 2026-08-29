@@ -74,11 +74,11 @@ class AuthorityService:
         organization = self.cipher.open(invite["organization_ciphertext"])
         user, session = self.identity.register(email, name, role="authority")
         with self.database.transaction() as connection:
-            connection.execute(
+            updated = connection.execute(
                 "UPDATE authority_invites SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL",
                 (now(), token_hash),
             )
-            if connection.total_changes != 1:
+            if updated.rowcount != 1:
                 raise ConflictError("authority invite has already been consumed")
             authority_ref = new_public_ref("auth")
             connection.execute(

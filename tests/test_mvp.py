@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import sqlite3
 
 import pytest
@@ -9,8 +10,8 @@ from code.mvp.api import create_app
 from code.mvp.config import Settings
 from code.mvp.container import create_services
 from code.mvp.crypto import Cipher
-from code.mvp.errors import AuthenticationError, AuthorizationError, CryptoError, NotFoundError
-from code.mvp.notifications import MemoryPushSender
+from code.mvp.errors import AuthenticationError, AuthorizationError, CryptoError, NotFoundError, ProviderUnavailable
+from code.mvp.notifications import ExpoPushSender, MemoryPushSender
 from code.mvp.util import valid_human_code
 
 
@@ -148,3 +149,31 @@ def test_short_code_requires_check_symbol_and_is_rate_limited(services):
     limited = client.get("/api/f/code/00000001")
     assert limited.status_code == 429
     assert "retry-after" in limited.headers
+
+def test_hosted_database_url_is_selected_without_relaxing_secret_requirements(monkeypatch):
+    monkeypatch.setenv("BEARWITHME_MASTER_KEY", "dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxvbmchISE=")
+    monkeypatch.setenv("BEARWITHME_PLATFORM_ADMIN_TOKEN", "test-platform-admin-token-for-config")
+    monkeypatch.delenv("BEARWITHME_DATABASE", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "postgresql://db.example.invalid/app")
+    settings = Settings.from_env()
+    assert settings.database_path == "postgresql://db.example.invalid/app"
+
+def test_push_provider_rejection_is_explicit(monkeypatch, tmp_path):
+    settings = replace(Settings.for_testing(str(tmp_path / "push.db")), push_url="https://push.invalid")
+    sender = ExpoPushSender(settings)
+
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return None
+
+        def read(self):
+            return b'{"data":{"status":"error"}}'
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_args, **_kwargs: Response())
+    with pytest.raises(ProviderUnavailable):
+        sender.send("ExponentPushToken[test]", {"title": "Bear With Me"})

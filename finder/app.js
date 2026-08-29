@@ -10,8 +10,12 @@ function setStatus(message, error = false) {
 
 function pathTarget() {
   const parts = window.location.pathname.split("/").filter(Boolean);
-  if (parts[0] !== "f" || !parts[1]) throw new Error("This finder link is incomplete.");
-  return parts[1] === "code" ? { endpoint: `/f/code/${encodeURIComponent(parts[2] || "")}` } : { endpoint: `/f/${encodeURIComponent(parts[1])}` };
+  if (parts[0] !== "f") throw new Error("This finder link is incomplete.");
+  if (!parts[1]) return null;
+  if (parts[1] === "code" && parts[2]) {
+    return { endpoint: `/f/code/${encodeURIComponent(parts[2])}` };
+  }
+  return { endpoint: `/f/${encodeURIComponent(parts[1])}` };
 }
 
 async function json(url, options = {}) {
@@ -48,14 +52,28 @@ async function refreshMessages() {
 async function start() {
   try {
     const target = pathTarget();
+    if (!target) {
+      $("code-entry").classList.remove("hidden");
+      setStatus("Enter the short code printed on the label.");
+      $("code-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const code = $("human-code").value.trim().toUpperCase();
+        window.location.assign(`/f/code/${encodeURIComponent(code)}`);
+      });
+      return;
+    }
     const existing = sessionStorage.getItem(`bwm:${target.endpoint}`);
     const opened = existing ? JSON.parse(existing) : await json(target.endpoint);
+    sessionStorage.setItem(`bwm:${target.endpoint}`, JSON.stringify(opened));
     state.session = opened.session_token;
     $("item-label").textContent = opened.label || "Found item";
     $("report").classList.remove("hidden");
     setStatus("Thanks for taking a moment to help.");
 
-    $("authority").addEventListener("change", () => $("organization").classList.toggle("hidden", !$("authority").checked));
+    $("authority").addEventListener("change", () => {
+      $("organization").classList.toggle("hidden", !$("authority").checked);
+      $("organization").required = $("authority").checked;
+    });
     $("report-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       try {

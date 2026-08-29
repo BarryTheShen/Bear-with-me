@@ -7,7 +7,7 @@ one-day demo and is intentionally not imported here.
 
 - `config.py` — environment configuration and fail-closed secrets.
 - `crypto.py` — AES-GCM envelope encryption and HMAC blind indexes.
-- `database.py` — SQLite schema and transaction/read contexts.
+- `database.py` — SQLite/PostgreSQL schema and transaction/read contexts.
 - `identity.py` — owner/authority registration, magic links, and sessions.
 - `items.py` — owner inventory and revocable/replacement tags.
 - `finder.py` — public tag resolution, short-lived finder sessions, and reports.
@@ -40,5 +40,28 @@ BEARWITHME_PLATFORM_ADMIN_TOKEN=<long-secret> \
 python -m uvicorn code.mvp.server:app --host 0.0.0.0 --port 8000
 ```
 
+Set `BEARWITHME_DATABASE` to a local SQLite path or PostgreSQL URL. If it is
+unset, `DATABASE_URL` is used when present; otherwise the local default is
+`bearwithme-mvp.db`. PostgreSQL is the production path for a serverless
+deployment; SQLite is for local development and tests.
+
 For production, set all secrets in the hosting secret manager. Never commit
 values or place provider keys in mobile or browser bundles.
+
+## Vercel + Supabase handoff
+
+The repository is deployment-ready but not linked to an external project. For a
+real deployment:
+
+1. Create a Supabase PostgreSQL project and set its pooled connection URL as
+   Vercel's `DATABASE_URL`.
+2. Set `BEARWITHME_MASTER_KEY`, `BEARWITHME_PLATFORM_ADMIN_TOKEN`,
+   `BEARWITHME_BASE_URL`, and `BEARWITHME_WEB_ORIGIN` in the Vercel project.
+3. Add `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` only when
+   calling is enabled. Leave them unset to keep chat reliable without calling.
+4. Deploy from the repository root so `vercel.json` serves the static finder,
+   owner, admin, and authority surfaces and routes `/api/*` to `api/index.py`.
+
+The function initializes the idempotent schema on startup. Use a Supabase
+connection pool for serverless traffic; do not put the database URL, service
+role key, encryption key, or provider secrets in browser or mobile bundles.
