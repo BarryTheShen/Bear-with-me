@@ -157,6 +157,9 @@ def test_hosted_database_url_is_selected_without_relaxing_secret_requirements(mo
     monkeypatch.setenv("DATABASE_URL", "postgresql://db.example.invalid/app")
     settings = Settings.from_env()
     assert settings.database_path == "postgresql://db.example.invalid/app"
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("POSTGRES_URL", "postgresql://vercel.example.invalid/app")
+    assert Settings.from_env().database_path == "postgresql://vercel.example.invalid/app"
 
 def test_push_provider_rejection_is_explicit(monkeypatch, tmp_path):
     settings = replace(Settings.for_testing(str(tmp_path / "push.db")), push_url="https://push.invalid")

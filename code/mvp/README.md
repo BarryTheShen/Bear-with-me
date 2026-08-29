@@ -41,9 +41,9 @@ python -m uvicorn code.mvp.server:app --host 0.0.0.0 --port 8000
 ```
 
 Set `BEARWITHME_DATABASE` to a local SQLite path or PostgreSQL URL. If it is
-unset, `DATABASE_URL` is used when present; otherwise the local default is
-`bearwithme-mvp.db`. PostgreSQL is the production path for a serverless
-deployment; SQLite is for local development and tests.
+unset, `DATABASE_URL` is used, then Vercel's pooled `POSTGRES_URL`; otherwise
+the local default is `bearwithme-mvp.db`. PostgreSQL is the production path
+for a serverless deployment; SQLite is for local development and tests.
 
 For production, set all secrets in the hosting secret manager. Never commit
 values or place provider keys in mobile or browser bundles.

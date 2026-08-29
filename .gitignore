@@ -10,3 +10,6 @@ __pycache__/
 # Editor / OS
 .DS_Store
 *.swp
+.vercel
+.env*
+supabase/.temp/
