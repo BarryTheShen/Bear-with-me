@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Bear With Me — owner</title>
+    <link rel="stylesheet" href="/finder/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <p class="eyebrow">OWNER WEB FALLBACK</p>
+      <h1>Your lost items</h1>
+      <section id="login" class="card">
+        <label for="name">Name</label>
+        <input id="name" required>
+        <label for="email">Email</label>
+        <input id="email" type="email" required>
+        <button id="register">Open owner account</button>
+      </section>
+      <section id="dashboard" class="card hidden">
+        <h2>Found reports</h2>
+        <div id="events"></div>
+      </section>
+      <section id="chat" class="card hidden">
+        <h2 id="chat-title">Anonymous chat</h2>
+        <ul id="messages" class="messages"></ul>
+        <form id="message-form" class="message-form">
+          <input id="message" maxlength="2000" placeholder="Reply anonymously" required>
+          <button>Send</button>
+        </form>
+      </section>
+      <p id="status" class="muted" aria-live="polite"></p>
+    </main>
+    <script src="/owner/app.js" defer></script>
+  </body>
+</html>

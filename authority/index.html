@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Bear With Me — authority</title>
+    <link rel="stylesheet" href="/finder/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <p class="eyebrow">AUTHORIZED RECOVERY PORTAL</p>
+      <h1>Help return property</h1>
+      <section id="accept" class="card">
+        <p class="muted">Use the one-time invitation issued by the platform administrator.</p>
+        <label for="invite">Invitation token</label>
+        <input id="invite" type="password" autocomplete="off" required>
+        <label for="name">Your name</label>
+        <input id="name" required>
+        <button id="accept-button">Accept invitation</button>
+      </section>
+      <section id="cases" class="card hidden">
+        <h2>Assigned cases</h2>
+        <div id="case-list"></div>
+      </section>
+      <section id="message" class="card hidden" aria-live="polite"></section>
+    </main>
+    <script src="/authority/app.js" defer></script>
+  </body>
+</html>

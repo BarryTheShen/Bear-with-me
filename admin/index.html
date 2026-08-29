@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Bear With Me — admin</title>
+    <link rel="stylesheet" href="/finder/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <p class="eyebrow">PLATFORM CONTROL PLANE</p>
+      <h1>Invite an authority</h1>
+      <p class="muted">This page never changes the platform administrator. It only creates an auditable authority invitation.</p>
+      <form id="invite-form" class="card">
+        <label for="admin-token">Platform admin token</label>
+        <input id="admin-token" type="password" autocomplete="off" required>
+        <label for="organization">Organization</label>
+        <input id="organization" placeholder="WashU Campus Security" required>
+        <label for="email">Authority email</label>
+        <input id="email" type="email" placeholder="security@example.edu" required>
+        <button>Generate invitation</button>
+      </form>
+      <section id="result" class="card hidden" aria-live="polite"></section>
+    </main>
+    <script src="/admin/app.js" defer></script>
+  </body>
+</html>
