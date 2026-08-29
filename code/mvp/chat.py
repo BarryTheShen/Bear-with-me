@@ -94,12 +94,12 @@ class ChatService:
     def _messages(self, connection, conversation_ref: str, after: str) -> list[Message]:
         if after:
             rows = connection.execute(
-                "SELECT * FROM messages WHERE conversation_ref=? AND created_at>? ORDER BY created_at ASC, rowid ASC",
+                "SELECT * FROM messages WHERE conversation_ref=? AND created_at>? ORDER BY created_at ASC, message_ref ASC",
                 (conversation_ref, after),
             ).fetchall()
         else:
             rows = connection.execute(
-                "SELECT * FROM messages WHERE conversation_ref=? ORDER BY created_at ASC, rowid ASC",
+                "SELECT * FROM messages WHERE conversation_ref=? ORDER BY created_at ASC, message_ref ASC",
                 (conversation_ref,),
             ).fetchall()
         return [

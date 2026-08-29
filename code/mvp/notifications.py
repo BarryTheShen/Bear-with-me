@@ -1,8 +1,8 @@
 """Owner push-device registration and provider-neutral notifications."""
 
 from __future__ import annotations
-
 import json
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
@@ -42,7 +42,11 @@ class ExpoPushSender(PushSender):
             with urllib.request.urlopen(request, timeout=8) as response:
                 if response.status >= 300:
                     raise ProviderUnavailable("push provider rejected notification")
-        except OSError as exc:
+                body = json.loads(response.read() or b"{}")
+                result = body.get("data", {})
+                if not isinstance(result, dict) or result.get("status") != "ok":
+                    raise ProviderUnavailable("push provider rejected notification")
+        except (OSError, urllib.error.URLError, ValueError) as exc:
             raise ProviderUnavailable("push provider unavailable") from exc
 
 

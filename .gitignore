@@ -1,5 +1,6 @@
 # Runtime state — the prototype recreates this on first run
 bearwithme.db
+bearwithme-mvp.db
 *.db-journal
 
 # Python

@@ -178,31 +178,87 @@ CREATE TABLE IF NOT EXISTS audit_events (
 CREATE INDEX IF NOT EXISTS idx_audit_target ON audit_events(target_type, target_ref, created_at DESC);
 """
 
+POSTGRES_SCHEMA = SCHEMA.replace("PRAGMA foreign_keys = ON;\n", "")
+
+
+class _Connection:
+    """Normalize the small DB-API surface used by domain services."""
+
+    def __init__(self, raw, postgres: bool):
+        self.raw = raw
+        self.postgres = postgres
+
+    def execute(self, sql: str, params=()):
+        return self.raw.execute(sql.replace("?", "%s") if self.postgres else sql, params)
+
+    def executescript(self, script: str):
+        if not self.postgres:
+            return self.raw.executescript(script)
+        for statement in script.split(";"):
+            if statement.strip():
+                self.raw.execute(statement)
+
+    def commit(self):
+        return self.raw.commit()
+
+    def rollback(self):
+        return self.raw.rollback()
+
+    def close(self):
+        return self.raw.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            self.rollback()
+        else:
+            self.commit()
+        self.close()
+
+
 
 class Database:
-    """Own SQLite connections and initialize the idempotent schema."""
+    """Own SQLite or PostgreSQL connections behind one small DB-API surface."""
 
     def __init__(self, path: str):
         self.path = path
+        self.is_postgres = path.startswith(("postgres://", "postgresql://"))
 
-    def connect(self) -> sqlite3.Connection:
+    def connect(self) -> _Connection:
+        if self.is_postgres:
+            try:
+                import psycopg
+                from psycopg.rows import dict_row
+            except ImportError as exc:
+                from .errors import ConfigurationError
+
+                raise ConfigurationError(
+                    "psycopg is required when BEARWITHME_DATABASE is PostgreSQL"
+                ) from exc
+            return _Connection(
+                psycopg.connect(self.path, row_factory=dict_row, autocommit=False),
+                True,
+            )
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         connection = sqlite3.connect(self.path, timeout=10, isolation_level=None)
         connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA busy_timeout = 10000")
-        return connection
+        return _Connection(connection, False)
 
     def initialize(self) -> None:
         with self.connect() as connection:
-            connection.executescript(SCHEMA)
+            if not self.is_postgres:
+                connection.execute("PRAGMA foreign_keys = ON")
+                connection.execute("PRAGMA busy_timeout = 10000")
+            connection.executescript(POSTGRES_SCHEMA if self.is_postgres else SCHEMA)
 
     @contextmanager
-    def transaction(self) -> Iterator[sqlite3.Connection]:
+    def transaction(self) -> Iterator[_Connection]:
         connection = self.connect()
         try:
-            connection.execute("BEGIN IMMEDIATE")
+            connection.execute("BEGIN" if self.is_postgres else "BEGIN IMMEDIATE")
             yield connection
             connection.commit()
         except Exception:
@@ -212,7 +268,7 @@ class Database:
             connection.close()
 
     @contextmanager
-    def read(self) -> Iterator[sqlite3.Connection]:
+    def read(self) -> Iterator[_Connection]:
         connection = self.connect()
         try:
             yield connection

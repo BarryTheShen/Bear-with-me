@@ -13,6 +13,14 @@
         <h1>Help return this item</h1>
         <p class="muted">You do not need an account. The owner will not see your identity.</p>
       </header>
+      <section id="code-entry" class="card hidden">
+        <h2>Enter the short code</h2>
+        <p class="muted">Type the eight characters printed on the label.</p>
+        <form id="code-form">
+          <input id="human-code" maxlength="10" autocapitalize="characters" autocomplete="off" required>
+          <button>Open finder page</button>
+        </form>
+      </section>
       <section id="status" class="card" aria-live="polite">Loading tag…</section>
       <section id="report" class="card hidden">
         <h2 id="item-label">Found item</h2>

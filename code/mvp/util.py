@@ -24,7 +24,7 @@ PLACES = (
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 def parse_time(value: str) -> datetime:

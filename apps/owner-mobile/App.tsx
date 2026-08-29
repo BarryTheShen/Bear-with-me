@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Button, FlatList, Platform, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
@@ -18,6 +18,7 @@ export default function App() {
   const [selected, setSelected] = useState<InboxEvent | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const lastMessage = useRef("");
   const [newLabel, setNewLabel] = useState("");
   const [call, setCall] = useState<{ server_url: string; token: string } | null>(null);
   const [tagCodes, setTagCodes] = useState<Record<string, string>>({});
@@ -65,9 +66,13 @@ export default function App() {
   useEffect(() => {
     if (!api || !selected) return;
     let active = true;
+    lastMessage.current = "";
     const load = async () => {
-      const next = await api.messages(selected.conversation_ref, messages.at(-1)?.created_at ?? "");
-      if (active && next.length) setMessages((current) => [...current, ...next]);
+      const next = await api.messages(selected.conversation_ref, lastMessage.current);
+      if (active && next.length) {
+        lastMessage.current = next.at(-1)?.created_at ?? lastMessage.current;
+        setMessages((current) => [...current, ...next]);
+      }
     };
     void load().catch(() => undefined);
     const timer = setInterval(() => void load().catch(() => undefined), 2500);
@@ -102,6 +107,7 @@ export default function App() {
     if (!api || !selected || !newMessage.trim()) return;
     try {
       const message = await api.sendMessage(selected.conversation_ref, newMessage.trim());
+      lastMessage.current = message.created_at;
       setMessages((current) => [...current, message]);
       setNewMessage("");
     } catch (error) {
