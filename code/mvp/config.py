@@ -43,8 +43,11 @@ class Settings:
                 "BEARWITHME_PLATFORM_ADMIN_TOKEN must contain at least 32 characters"
             )
         return cls(
-            database_path=os.environ.get("BEARWITHME_DATABASE")
-            or os.environ.get("DATABASE_URL", "bearwithme-mvp.db"),
+            database_path=(
+                os.environ.get("BEARWITHME_DATABASE")
+                or os.environ.get("DATABASE_URL")
+                or os.environ.get("POSTGRES_URL", "bearwithme-mvp.db")
+            ),
             base_url=os.environ.get("BEARWITHME_BASE_URL", "http://localhost:8000").rstrip("/"),
             web_origin=os.environ.get("BEARWITHME_WEB_ORIGIN", "http://localhost:3000").rstrip("/"),
             master_key=key,
