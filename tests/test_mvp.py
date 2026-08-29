@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from code.mvp.api import create_app
 from code.mvp.config import Settings
 from code.mvp.container import create_services
+from code.mvp.database import _normalize_postgres_dsn
 from code.mvp.crypto import Cipher
 from code.mvp.errors import AuthenticationError, AuthorizationError, CryptoError, NotFoundError, ProviderUnavailable
 from code.mvp.notifications import ExpoPushSender, MemoryPushSender
@@ -160,6 +161,10 @@ def test_hosted_database_url_is_selected_without_relaxing_secret_requirements(mo
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.setenv("POSTGRES_URL", "postgresql://vercel.example.invalid/app")
     assert Settings.from_env().database_path == "postgresql://vercel.example.invalid/app"
+
+def test_vercel_postgres_routing_parameter_is_removed_for_libpq():
+    dsn = "postgresql://user:pw@pooler.example.invalid:6543/postgres?supa=transaction&sslmode=require"
+    assert _normalize_postgres_dsn(dsn) == "postgresql://user:pw@pooler.example.invalid:6543/postgres?sslmode=require"
 
 def test_push_provider_rejection_is_explicit(monkeypatch, tmp_path):
     settings = replace(Settings.for_testing(str(tmp_path / "push.db")), push_url="https://push.invalid")
