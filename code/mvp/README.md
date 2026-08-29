@@ -50,11 +50,13 @@ values or place provider keys in mobile or browser bundles.
 
 ## Vercel + Supabase handoff
 
-The repository is deployment-ready but not linked to an external project. For a
-real deployment:
+The checked-in code is deployable, but each environment still requires its own
+managed database and secrets:
 
-1. Create a Supabase PostgreSQL project and set its pooled connection URL as
-   Vercel's `DATABASE_URL`.
+1. Create a Supabase PostgreSQL project and set its **Shared Pooler transaction
+   mode** URI as Vercel's `DATABASE_URL` (normally port `6543`). This is the
+   IPv4-compatible serverless path; the direct `db.*:5432` URI requires IPv6 or
+   Supabase's paid IPv4 add-on.
 2. Set `BEARWITHME_MASTER_KEY`, `BEARWITHME_PLATFORM_ADMIN_TOKEN`,
    `BEARWITHME_BASE_URL`, and `BEARWITHME_WEB_ORIGIN` in the Vercel project.
 3. Add `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` only when
