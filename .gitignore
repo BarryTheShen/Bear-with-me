@@ -1,0 +1,11 @@
+# Runtime state — the prototype recreates this on first run
+bearwithme.db
+*.db-journal
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editor / OS
+.DS_Store
+*.swp
