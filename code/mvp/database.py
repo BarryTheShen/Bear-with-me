@@ -238,7 +238,12 @@ class Database:
                     "psycopg is required when BEARWITHME_DATABASE is PostgreSQL"
                 ) from exc
             return _Connection(
-                psycopg.connect(self.path, row_factory=dict_row, autocommit=False),
+                psycopg.connect(
+                    self.path,
+                    row_factory=dict_row,
+                    autocommit=False,
+                    prepare_threshold=None,
+                ),
                 True,
             )
         if self.path != ":memory:":
