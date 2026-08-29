@@ -10,6 +10,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 SCHEMA = """
@@ -181,6 +182,13 @@ CREATE INDEX IF NOT EXISTS idx_audit_target ON audit_events(target_type, target_
 POSTGRES_SCHEMA = SCHEMA.replace("PRAGMA foreign_keys = ON;\n", "")
 
 
+def _normalize_postgres_dsn(value: str) -> str:
+    """Drop Vercel/Supabase routing metadata unsupported by libpq."""
+    parsed = urlsplit(value)
+    query = [(key, item) for key, item in parse_qsl(parsed.query, keep_blank_values=True) if key != "supa"]
+    return urlunsplit(parsed._replace(query=urlencode(query)))
+
+
 class _Connection:
     """Normalize the small DB-API surface used by domain services."""
 
@@ -235,11 +243,11 @@ class Database:
                 from .errors import ConfigurationError
 
                 raise ConfigurationError(
-                    "psycopg is required when BEARWITHME_DATABASE is PostgreSQL"
+                    "psycopg is required when using a PostgreSQL database URL"
                 ) from exc
             return _Connection(
                 psycopg.connect(
-                    self.path,
+                    _normalize_postgres_dsn(self.path),
                     row_factory=dict_row,
                     autocommit=False,
                     prepare_threshold=None,
