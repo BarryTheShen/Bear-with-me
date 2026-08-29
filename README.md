@@ -816,6 +816,203 @@ Tools app instead.
       3 mm N-Mark, an 8 mm directional Wayfinding mark, or relying on trained
       staff at intake. Decide, because it changes the industrial design.
 
+### Product MVP direction
+
+The MVP has two client surfaces and one backend:
+
+- **Finder web** — a normal browser opened by NFC, QR, or a short typed code. No
+  finder account or app.
+- **Owner mobile app** — React Native with Expo and TypeScript, built for iOS and
+  Android with EAS. This is the notification source of truth.
+- **Web backend** — hosted on Vercel, backed by a managed PostgreSQL database.
+
+A PWA can receive system notifications, but on iOS it must be added to the Home
+Screen and the user must grant permission through a user gesture. That is a
+platform-dependent onboarding path, so it is not sufficient as the only owner
+notification path. Keep a responsive owner web view as a fallback, but use the
+native owner app for the MVP's notification guarantee. See WebKit's
+[Web Push guidance](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/).
+
+**Identity and database encryption**
+
+- Generate a random internal user UUID. Never expose it in NFC/QR payloads,
+  URLs, HTML, notifications, or chat.
+- Store the UUID only as application-layer ciphertext using envelope encryption.
+  The encryption key must live outside the database, in a managed secret/KMS
+  boundary. Database disk encryption and TLS are additional layers, not a
+  replacement for field encryption.
+- Store a keyed HMAC of the UUID beside its ciphertext when lookup is required.
+  The HMAC permits equality lookup without storing a plaintext or using
+  reversible deterministic encryption.
+- Store contact details, authority identities, private item proof, and push
+  metadata as encrypted fields where appropriate. Keep the encryption keys out
+  of the database and out of client bundles.
+- Use non-identifying database references for relationships. The public
+  application must never derive a user identity from a tag or database row ID.
+
+**Short tag access without weakening owner security**
+
+Use two tag identifiers:
+
+1. A random tag secret, at least 128 bits, is used in the NFC/QR URL and stored
+   only as a hash. This long, untypeable secret is the strongest carrier when
+   the phone can tap or scan; NFC/QR must never use the short human alias.
+2. A human code is an eight-character Crockford-style code with a check symbol,
+   formatted in groups for typing. It is an alias that reaches only the safe
+   `/f` finder route; it is not an owner login or an authority credential.
+
+This keeps manual entry short while ensuring that guessing a code cannot reveal
+owner contact information or private item proof. Apply aggressive per-IP,
+per-session, and per-code throttling to `/f`; add a challenge after repeated
+failures. Revoke both lookup paths when a tag is deactivated. A replacement gets
+a new secret and human code while preserving the same item history.
+
+Do not place a phone number, email address, internal UUID, serial number, or
+owner name on the tag.
+
+**MVP records**
+
+`user`, `item`, `tag`, `found_event`, `finder_session`, `conversation`, `message`,
+`push_device`, `authority_user`, `authority_case`, and `audit_event`. A tag is
+separate from an item so it can be revoked and replaced. Store coarse handoff
+places, not live finder GPS. Keep receipts, serial numbers, and private
+descriptions owner-only unless selectively released for a handoff.
+
+**Finder → owner flow**
+
+1. The finder taps NFC, scans QR, or enters the short code in the finder website.
+2. The finder sees only a safe item description and the anonymous-return
+   explanation.
+3. The finder submits a coarse place, optional note, and optionally chooses
+   campus security/police handoff.
+4. The backend creates a `found_event` and an anonymous conversation.
+5. The owner app receives a real system notification:
+   “Someone reported your item found.”
+6. The notification opens the item and conversation in the owner app. Do not put
+   location, notes, or identity data in the lock-screen payload.
+7. The finder chats in the browser; the owner replies in the app. Use random
+   participant/session identifiers and escape all rendered message content.
+8. The owner can mark the item recovered, close the conversation, revoke the tag,
+   or provision a replacement.
+
+Use ordinary authenticated API requests for writes. For the presentation, use
+short polling or a managed realtime channel rather than depending on a
+long-lived custom SSE process on serverless hosting. Push notification, unread
+state, and message retrieval must remain correct even if a live connection
+drops.
+
+**Native notification implementation**
+
+The owner app uses `expo-notifications` and EAS credentials for APNs and FCM,
+then registers one or more device tokens with the backend. The server sends a
+minimal push through Expo Push Service or directly through APNs/FCM later.
+Permission denial must degrade to in-app unread state and email fallback; it
+must not silently report that notification delivery succeeded.
+
+Expo's official setup requires a physical-device-capable development build and
+platform push credentials:
+[Expo push setup](https://docs.expo.dev/push-notifications/push-notifications-setup/).
+
+**Calling decision**
+
+Include voice calling as a bounded extension after anonymous chat works. Use a
+provider that supports both browser and React Native audio rooms, preferably
+LiveKit Cloud for this cross-platform flow:
+
+- backend creates a short-lived room token only after an owner/finder
+  conversation exists;
+- finder browser and owner app join the same temporary room;
+- either side can mute and end the call;
+- room tokens expire and the room is closed with the conversation;
+- neither side learns the other's phone number.
+
+LiveKit's Expo integration requires native dependencies and an Expo development
+build, not Expo Go. Therefore calling is easy enough to prototype after the
+native app exists, but it must not block the tag → notify → chat demonstration.
+Acceptance requires two physical devices/browsers to complete a short audio call;
+otherwise ship chat as the reliable fallback. See the
+[LiveKit Expo quickstart](https://docs.livekit.io/transport/sdk-platforms/expo/).
+
+**Hosting and database**
+
+- Host the finder website, owner web fallback, admin portal, and API routes on
+  Vercel.
+- Use Supabase PostgreSQL for the relational database and, if useful, its
+  authentication and managed realtime facilities. Client code must not receive
+  database service-role credentials.
+- Put encryption keys, push credentials, LiveKit secrets, and the immutable
+  platform-admin allowlist in Vercel environment secrets or a dedicated KMS;
+  never commit them or store them in PostgreSQL.
+- Keep server operations in server-only Vercel routes. Apply row-level
+  authorization and explicit ownership checks even when the client is
+  authenticated.
+- Do not promise durable custom SSE connections on Vercel. Use request-based
+  message retrieval or a managed realtime channel for chat.
+
+**Authority and administrator security**
+
+Authority users are manually invited campus-security or police users. SheerID
+is not the authority authorization mechanism. An administrator approves the
+organization and invite, and every authority action is audited.
+
+The platform administrator is a control-plane role, not a normal editable
+profile:
+
+- no route can create, promote, demote, or delete the platform administrator;
+- authority users cannot invite administrators;
+- normal admins cannot alter the immutable admin allowlist;
+- bootstrap and rotation happen out of band through deployment secrets or a
+  restricted operator procedure;
+- MFA, short sessions, server-side authorization, and append-only audit events
+  are required;
+- admin contact and identity data are encrypted at rest.
+
+This protects against application-level privilege escalation. It cannot make a
+database superuser or a compromised runtime harmless; those keys and the
+encryption boundary must therefore remain outside the database.
+
+Authority cases expose only:
+
+- exact tag/item reference and safe item description;
+- owner verification state and selected recovery details;
+- custody location, handoff instructions, case number, and case status;
+- anonymous conversation relay;
+- audit history.
+
+The authority can record custody, send relay messages, add a case number, and
+mark the item released/recovered. Owner contact disclosure requires explicit
+logged consent or a documented legal/policy basis.
+
+**Build order and presentation acceptance**
+
+1. Create the Vercel web shell, Expo owner app, Supabase schema, server-only
+   secrets, authentication, encrypted UUID vault, and owner inventory.
+2. Add hashed tag secrets, short human codes, QR/NFC/typed entry, revocation,
+   replacement, and audit events.
+3. Add finder sessions, found events, anonymous chat, unread state, and message
+   retrieval.
+4. Add native push registration and a real system notification on both iOS and
+   Android test devices.
+5. Add the manually invited authority case flow and least-privilege views.
+6. Run the optional LiveKit call spike. Keep it only if the two-device acceptance
+   test passes; otherwise keep the call action out of the core demo.
+7. Test copied-tag abuse, code throttling, session expiry, CSRF/XSS, key
+   separation, backup/restore, QR size, NFC material compatibility, and
+   iPhone/Android finder paths.
+
+The presentation script is deterministic: owner registers a bottle and receives
+its tag; finder scans or types the short code; owner receives a system
+notification; both sides chat anonymously; finder selects security handoff;
+authority records custody; owner marks recovered; old tag is revoked and a
+replacement is issued.
+
+**Explicitly out of the core MVP:** a PWA-only notification guarantee, public
+owner phone numbers, live GPS tracking, automatic police discovery, NTAG424
+cryptographic authentication, and a calling feature that has not passed the
+two-device test. The current stdlib/SQLite prototype remains the demo reference;
+it is not the authenticated multi-tenant product backend.
+
+
 ---
 
 ## 9. Evidence index

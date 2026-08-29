@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Bear With Me",
+    "slug": "bear-with-me-owner",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bearwithme",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bearwithme.owner",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Bear With Me uses the microphone only during an owner-approved return call."
+      }
+    },
+    "android": {
+      "package": "com.bearwithme.owner",
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "plugins": [
+      "expo-notifications",
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc"
+    ]
+  }
+}

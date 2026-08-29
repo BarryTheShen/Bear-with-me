@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Bear With Me — found item</title>
+    <link rel="stylesheet" href="/finder/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">BEAR WITH ME</p>
+        <h1>Help return this item</h1>
+        <p class="muted">You do not need an account. The owner will not see your identity.</p>
+      </header>
+      <section id="status" class="card" aria-live="polite">Loading tag…</section>
+      <section id="report" class="card hidden">
+        <h2 id="item-label">Found item</h2>
+        <form id="report-form">
+          <label for="place">Where is the item now?</label>
+          <select id="place" name="place" required>
+            <option>Main library</option>
+            <option>Science library</option>
+            <option>Student union</option>
+            <option>Sports centre</option>
+            <option>Lecture hall block</option>
+            <option>Cafeteria</option>
+            <option>Campus security</option>
+            <option>Still with me</option>
+          </select>
+          <label for="note">Note for the owner (optional)</label>
+          <textarea id="note" maxlength="1000" placeholder="Left it with the front desk"></textarea>
+          <label class="check"><input id="authority" type="checkbox"> I handed it to campus security or police</label>
+          <input id="organization" class="hidden" maxlength="160" placeholder="Organization name">
+          <button>Tell the owner</button>
+        </form>
+      </section>
+      <section id="chat" class="card hidden">
+        <h2>Anonymous chat</h2>
+        <p class="muted">Keep this page open. The owner can reply without seeing your contact details.</p>
+        <ul id="messages" class="messages"></ul>
+        <form id="message-form" class="message-form">
+          <input id="message" maxlength="2000" placeholder="Write a message" autocomplete="off" required>
+          <button>Send</button>
+        </form>
+      </section>
+    </main>
+    <script src="/finder/app.js" defer></script>
+  </body>
+</html>
