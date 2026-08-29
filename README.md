@@ -10,6 +10,26 @@ live in chat.
 
 **Deadline:** Sunday 30 August 2026, 08:00.
 
+---
+
+> ### Resuming work, or handing this to someone new
+>
+> **Read this file top to bottom first.** It is deliberately self-sufficient:
+> every decision below carries the evidence and the source that produced it, so
+> nothing important lives only in a chat log or in someone's head.
+>
+> Then, in order:
+>
+> 1. **§8 Open decisions** — what is unresolved right now, and the one item
+>    flagged as the riskiest untested assumption in the project.
+> 2. **§7 Current state** — what is built, what is verified, and how to run it
+>    so a phone can actually reach it.
+> 3. **§9 Evidence index** — nine reports. Open one only when you need to
+>    challenge a specific number; the headline figures are quoted inline here.
+>
+> If a claim in this file is not followed by a source, treat it as unverified
+> and check it before putting it in front of a judge.
+
 ## Where everything lives
 
 ```
