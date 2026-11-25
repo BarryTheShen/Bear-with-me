@@ -708,7 +708,7 @@ moat is adoption and switching cost, not a contract clause.
   **Intake form** — this is the actionable one:
   <https://washu.qualtrics.com/jfe/form/SV_3gXVRX295f45YDc>
 - **Skandalaris Center** — Entrepreneurship & IP Law Clinic, plus free
-  *Experts on Call*. 314-935-9134, sc@wustl.edu
+  *Experts on Call* (contact details on the center's website).
 - **Not** the Office of Technology Management — OTM handles University-owned IP,
   not student ventures.
 

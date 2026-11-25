@@ -262,12 +262,12 @@ d.table(
       "Arduino RFID kits and PN532 boards. This is the single highest-probability "
       "source and it is in the same building as you."],
      ["<b>Spartan / Jubel Makerspace</b>",
-      "314-935-6573 &middot; jubelmakerspace@wustl.edu",
+      "Contact details on the makerspace's website",
       "Whether anyone is in despite the published closure, and whether the electronics "
       "bench has NFC or RFID tags. Their equipment list mentions an electronics "
       "category but does not itemise tags."],
      ["<b>McKelvey / ESE205 teaching lab</b>",
-      "314-935-6186 &middot; tapellad@wustl.edu",
+      "Contact details on the ESE department's website",
       "ESE205 runs an <b>NFC Lock project using a PN532 breakout</b> and an RFID "
       "door-lock project using an ID-12LA reader with tags. That coursework hardware "
       "exists somewhere on campus. Ask if a TA or lab manager can lend a few tags."]],
